@@ -1,0 +1,4 @@
+.scannerwork
+.pytest_cache
+src/__pycache__/
+*.pyc
