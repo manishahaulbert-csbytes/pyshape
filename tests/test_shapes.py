@@ -63,3 +63,11 @@ class TestShapes(unittest.TestCase):
 
     def test_rectangle_init(self):
         shapes.Rectangle()
+
+    def test_circle_init(self):
+        shapes.Circle()
+
+    def test_circle_area(self):
+        r = 5
+        c = shapes.Circle(radius=r)
+        self.assertAlmostEqual(c.area(), 3.14159 * r * r, places=2)
