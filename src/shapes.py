@@ -71,3 +71,14 @@ class Rectangle(Parallelogram):
 
     def __init__(self, *args, **kwargs):
         super(Rectangle, self).__init__(*args, **kwargs)
+
+
+class Circle(Shape):
+
+    def __init__(self, radius=None, *args, **kwargs):
+        super(Circle, self).__init__(*args, **kwargs)
+        self.radius = radius
+
+    def area(self):
+        import math
+        return math.pi * (self.radius ** 2)
