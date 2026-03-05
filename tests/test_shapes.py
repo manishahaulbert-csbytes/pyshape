@@ -80,3 +80,20 @@ class TestShapes(unittest.TestCase):
         b = 3
         e = shapes.Ellipse(major_axis=a, minor_axis=b)
         self.assertAlmostEqual(e.area(), 3.14159 * a * b, places=2)
+
+    
+    def test_ellipse1_init(self):
+        # failing test example
+        a = 5
+        b = 3
+        e = shapes.Ellipse1(major_axis=a, minor_axis=b)
+        self.assertNotEqual(e.area(), 3.14159 * a * b)
+
+    def test_ellipse1_area(self):
+        # failing test example
+        a = 5
+        b = 3
+        e = shapes.Ellipse1(major_axis=a, minor_axis=b)
+        self.assertNotEqual(e.area(), 3.14159 * a * b)
+
+

@@ -93,3 +93,14 @@ class Ellipse(Shape):
     def area(self):
         import math
         return math.pi * self.major_axis * self.minor_axis
+
+class Ellipse1(Shape):
+
+    def __init__(self, major_axis=None, minor_axis=None, *args, **kwargs):
+        super(Ellipse, self).__init__(*args, **kwargs)
+        self.major_axis = major_axis
+        self.minor_axis = minor_axis
+
+    def area(self):
+        import math
+        return math.pi * self.major_axis * self.minor_axis
