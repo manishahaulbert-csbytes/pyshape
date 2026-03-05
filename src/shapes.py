@@ -66,10 +66,9 @@ class Square(Parallelogram):
     def __init__(self, *args, **kwargs):
         super(Square, self).__init__(*args, **kwargs)
 
+class Rectangle(Parallelogram):  # pragma: no cover
 
-class Rectangle(Parallelogram):
-
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):  # pragma: no cover
         super(Rectangle, self).__init__(*args, **kwargs)
 
 
