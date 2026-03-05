@@ -3,3 +3,7 @@
 src/__pycache__/
 tests/__pycache__/
 *.pyc
+.coverage
+coverage.xml
+htmlcov/
+sonar-project.properties

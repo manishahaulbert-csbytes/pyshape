@@ -63,3 +63,20 @@ class TestShapes(unittest.TestCase):
 
     def test_rectangle_init(self):
         shapes.Rectangle()
+
+    def test_circle_init(self):
+        shapes.Circle()
+
+    def test_circle_area(self):
+        r = 5
+        c = shapes.Circle(radius=r)
+        self.assertAlmostEqual(c.area(), 3.14159 * r * r, places=2)
+
+    def test_ellipse_init(self):
+        shapes.Ellipse()
+
+    def test_ellipse_area(self):
+        a = 5
+        b = 3
+        e = shapes.Ellipse(major_axis=a, minor_axis=b)
+        self.assertAlmostEqual(e.area(), 3.14159 * a * b, places=2)

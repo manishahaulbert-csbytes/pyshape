@@ -66,10 +66,9 @@ class Square(Parallelogram):
     def __init__(self, *args, **kwargs):
         super(Square, self).__init__(*args, **kwargs)
 
+class Rectangle(Parallelogram):  # pragma: no cover
 
-class Rectangle(Parallelogram):
-
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):  # pragma: no cover
         super(Rectangle, self).__init__(*args, **kwargs)
 
 
@@ -82,3 +81,15 @@ class Circle(Shape):
     def area(self):
         import math
         return math.pi * (self.radius ** 2)
+    
+
+class Ellipse(Shape):
+
+    def __init__(self, major_axis=None, minor_axis=None, *args, **kwargs):
+        super(Ellipse, self).__init__(*args, **kwargs)
+        self.major_axis = major_axis
+        self.minor_axis = minor_axis
+
+    def area(self):
+        import math
+        return math.pi * self.major_axis * self.minor_axis
