@@ -104,3 +104,14 @@ class Ellipse1(Shape):
     def area(self):
         import math
         return math.pi * self.major_axis * self.minor_axis
+    
+class Rhombus(Parallelogram):
+
+    def __init__(self, *args, **kwargs):
+        super(Rhombus, self).__init__(*args, **kwargs)
+        self.diagonal1 = kwargs.get('diagonal1', None)
+        self.diagonal2 = kwargs.get('diagonal2', None)
+
+    def area(self):
+        return (self.diagonal1 * self.diagonal2) / 2
+    

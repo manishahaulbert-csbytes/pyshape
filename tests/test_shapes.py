@@ -97,3 +97,12 @@ class TestShapes(unittest.TestCase):
         self.assertNotEqual(e.area(), 3.14159 * a * b)
 
 
+
+    def test_rhombus_init(self):
+        shapes.Rhombus()
+    
+    def test_rhombus_area(self):
+        b = 4
+        h = 10
+        r = shapes.Rhombus(base=b, height=h)
+        self.assertEqual(r.area(), b*h)
