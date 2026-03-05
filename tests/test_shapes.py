@@ -80,3 +80,12 @@ class TestShapes(unittest.TestCase):
         b = 3
         e = shapes.Ellipse(major_axis=a, minor_axis=b)
         self.assertAlmostEqual(e.area(), 3.14159 * a * b, places=2)
+
+    def test_rhombus_init(self):
+        shapes.Rhombus()
+    
+    def test_rhombus_area(self):
+        b = 4
+        h = 10
+        r = shapes.Rhombus(base=b, height=h)
+        self.assertEqual(r.area(), b*h)
