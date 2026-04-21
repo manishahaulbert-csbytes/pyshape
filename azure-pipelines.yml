@@ -1,0 +1,63 @@
+trigger:
+- master
+
+pool:
+  vmImage: ubuntu-latest
+
+strategy:
+  matrix:
+    Python38:
+      python.version: '3.8'
+    Python39:
+      python.version: '3.9'
+    Python310:
+      python.version: '3.10'
+    Python311:
+      python.version: '3.11'
+
+steps:
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '$(python.version)'
+  displayName: 'Use Python $(python.version)'
+
+# 1. Prepare SonarQube Analysis
+# This must happen BEFORE your tests run
+- task: SonarQubePrepare@5
+  condition: eq(variables['python.version'], '3.11')
+  inputs:
+    SonarQube: '20261sonarqubeserver' # The name you gave the service connection
+    scannerMode: 'CLI'
+    configMode: 'manual'
+    cliProjectKey: 'pyshape_pyshape_7f568b4b-9811-41df-9166-5bd707da3862'
+    cliProjectName: 'PyShape'
+    extraProperties: |
+      sonar.python.version=$(python.version)
+      sonar.sources=.
+      sonar.tests=tests/
+      sonar.python.xunit.reportPath=$(System.DefaultWorkingDirectory)/test-results.xml
+      sonar.python.coverage.reportPaths=$(System.DefaultWorkingDirectory)/coverage.xml
+
+- script: |
+    python -m pip install --upgrade pip
+    pip install -r requirements.txt
+    pip install pytest pytest-azurepipelines pytest-cov
+  displayName: 'Install dependencies'
+
+# 2. Run tests with Coverage
+# SonarQube needs the coverage.xml file to show code coverage
+- script: |
+    pytest --doctest-modules --junitxml=test-results.xml --cov=. --cov-report=xml
+  displayName: 'pytest with coverage'
+
+# 3. Run Code Analysis
+- task: SonarQubeAnalyze@5
+  condition: eq(variables['python.version'], '3.11')
+  displayName: 'Run SonarQube Analysis'
+
+# 4. Publish Results to SonarQube
+- task: SonarQubePublish@5
+  condition: eq(variables['python.version'], '3.11')
+  inputs:
+    pollingTimeoutSec: '300'
+  displayName: 'Publish Quality Gate Result'
