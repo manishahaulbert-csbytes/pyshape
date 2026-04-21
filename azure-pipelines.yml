@@ -33,6 +33,7 @@ steps:
     cliProjectKey: 'pyshape_pyshape_7f568b4b-9811-41df-9166-5bd707da3862'
     cliProjectName: 'PyShape'
     extraProperties: |
+      sonar.scanner.skipJreProvisioning=true
       sonar.python.version=$(python.version)
       sonar.sources=.
       sonar.tests=tests/
