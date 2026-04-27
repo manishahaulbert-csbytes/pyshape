@@ -25,6 +25,8 @@ variables:
 
 steps:
 - task: UsePythonVersion@0
+  fetchDepth: 0
+  lfs: true
   inputs:
     versionSpec: '$(python.version)'
 
