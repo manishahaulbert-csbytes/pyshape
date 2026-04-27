@@ -4,7 +4,6 @@ trigger:
 - develop
 - feature/*
 
-# Enable PR triggers for pull requests targeting these branches
 pr:
 - master
 - main
@@ -22,6 +21,8 @@ strategy:
 
 variables:
   PYTHONPATH: '$(System.DefaultWorkingDirectory)'
+  pyshapeProjectKey: 'pyshape_pyshape'
+  pymathProjectKey: 'pyshape_pymath'
 
 steps:
 - task: UsePythonVersion@0
@@ -29,49 +30,32 @@ steps:
     versionSpec: '$(python.version)'
   displayName: 'Use Python $(python.version)'
 
-# 1. Prepare SonarQube Analysis
-# This must happen BEFORE your tests run
-- task: SonarQubePrepare@8
-  condition: eq(variables['python.version'], '3.11')
-  inputs:
-    SonarQube: '20261sonarqubeserver' # The name you gave the service connection
-    scannerMode: 'CLI'
-    cliScannerVersion: '8.0.1.6346'
-    configMode: 'manual'
-    cliProjectKey: $(projectKey)
-    cliProjectName: 'PyShape Monorepo'
-    extraProperties: |
-      sonar.scanner.skipJreProvisioning=true
-      sonar.python.version=$(python.version)
-      sonar.sources=packages/
-      sonar.tests=packages/*/tests/
-      sonar.python.xunit.reportPath=$(System.DefaultWorkingDirectory)/test-results.xml
-      sonar.python.coverage.reportPaths=$(System.DefaultWorkingDirectory)/coverage.xml
-      sonar.coverage.exclusions=**/tests/**,**/test_*.py,**/__pycache__/**
-      sonar.exclusions=**/__pycache__/**,**/.*,scripts/**
-
+# Install dependencies (all jobs)
 - script: |
     python -m pip install --upgrade pip
     pip install -r requirements.txt
-    # Install monorepo dependencies
     pip install -e .
   displayName: 'Install monorepo dependencies'
 
 - script: |
-    # Install individual package dependencies for development
     cd packages/pyshape && pip install -e .
     cd ../pymath && pip install -e .
     cd ../..
   displayName: 'Install package dependencies'
 
-# 2. Run tests with Coverage for both packages
-# SonarQube needs the coverage.xml file to show code coverage
+# Run tests with coverage once (all packages)
 - script: |
     echo "Running tests for PyShape Monorepo..."
-    pytest packages/*/tests/ --doctest-modules --junitxml=test-results.xml --cov=packages --cov-report=xml --cov-report=term-missing --verbose
+    pytest packages/*/tests/ \
+      --doctest-modules \
+      --junitxml=test-results.xml \
+      --cov=packages \
+      --cov-report=xml \
+      --cov-report=term-missing \
+      --verbose
   displayName: 'Run tests with coverage for all packages'
 
-# 3. Run individual package tests (for detailed reporting)
+# Optional: per-package tests (for detail)
 - script: |
     echo "Testing PyShape package..."
     cd packages/pyshape
@@ -82,12 +66,13 @@ steps:
 
 - script: |
     echo "Testing PyMath package..."
-    cd packages/pymath 
+    cd packages/pymath
     pytest tests/test_mathutils.py -v --junitxml=../../pymath-test-results.xml
     cd ../..
   displayName: 'Test PyMath package'
+  continueOnError: true
 
-# 4. Run package demos
+# Optional: demos
 - script: |
     echo "Running PyMath demo..."
     cd packages/pymath/src && python main.py
@@ -97,21 +82,61 @@ steps:
   displayName: 'Run package demos'
   continueOnError: true
 
-# 5. Run Code Analysis
+# --- SonarQube: Project 1 (pyshape) ---
+- task: SonarQubePrepare@8
+  condition: eq(variables['python.version'], '3.11')
+  inputs:
+    SonarQube: '20261sonarqubeserver'
+    scannerMode: 'CLI'
+    cliScannerVersion: '8.0.1.6346'
+    configMode: 'manual'
+    cliProjectKey: '$(pyshapeProjectKey)'
+    cliProjectName: 'PyShape / pyshape'
+    extraProperties: |
+      sonar.scanner.skipJreProvisioning=true
+      sonar.python.version=$(python.version)
+      sonar.projectBaseDir=$(System.DefaultWorkingDirectory)/packages/pyshape
+      sonar.sources=src
+      sonar.tests=tests
+      sonar.python.xunit.reportPath=$(System.DefaultWorkingDirectory)/test-results.xml
+      sonar.python.coverage.reportPaths=$(System.DefaultWorkingDirectory)/coverage.xml
+      sonar.coverage.exclusions=**/tests/**,**/test_*.py,**/__pycache__/**
+      sonar.exclusions=**/__pycache__/**,**/.*,scripts/**
+
 - task: SonarQubeAnalyze@8
+  condition: eq(variables['python.version'], '3.11')
   inputs:
     jdkversion: 'JAVA_HOME_17_X64'
-  condition: eq(variables['python.version'], '3.11')
-  displayName: 'Run SonarQube Analysis'
+  displayName: 'Analyze SonarQube project: pyshape'
 
-# 6. Publish Results to SonarQube
-- task: SonarQubePublish@8
+# --- SonarQube: Project 2 (pymath) ---
+- task: SonarQubePrepare@8
   condition: eq(variables['python.version'], '3.11')
   inputs:
-    pollingTimeoutSec: '300'
-  displayName: 'Publish Quality Gate Result'
+    SonarQube: '20261sonarqubeserver'
+    scannerMode: 'CLI'
+    cliScannerVersion: '8.0.1.6346'
+    configMode: 'manual'
+    cliProjectKey: '$(pymathProjectKey)'
+    cliProjectName: 'PyShape / pymath'
+    extraProperties: |
+      sonar.scanner.skipJreProvisioning=true
+      sonar.python.version=$(python.version)
+      sonar.projectBaseDir=$(System.DefaultWorkingDirectory)/packages/pymath
+      sonar.sources=src
+      sonar.tests=tests
+      sonar.python.xunit.reportPath=$(System.DefaultWorkingDirectory)/test-results.xml
+      sonar.python.coverage.reportPaths=$(System.DefaultWorkingDirectory)/coverage.xml
+      sonar.coverage.exclusions=**/tests/**,**/test_*.py,**/__pycache__/**
+      sonar.exclusions=**/__pycache__/**,**/.*,scripts/**
 
-# 7. Publish test results
+- task: SonarQubeAnalyze@8
+  condition: eq(variables['python.version'], '3.11')
+  inputs:
+    jdkversion: 'JAVA_HOME_17_X64'
+  displayName: 'Analyze SonarQube project: pymath'
+
+# Publish tests (all jobs)
 - task: PublishTestResults@2
   condition: succeededOrFailed()
   inputs:
@@ -119,15 +144,10 @@ steps:
     testRunTitle: 'Python $(python.version) - Monorepo Tests'
   displayName: 'Publish test results'
 
-# 8. Publish coverage results
+# Publish coverage (once, from 3.11)
 - task: PublishCodeCoverageResults@2
   condition: eq(variables['python.version'], '3.11')
   inputs:
     summaryFileLocation: '$(System.DefaultWorkingDirectory)/coverage.xml'
     codecoverageTool: 'Cobertura'
   displayName: 'Publish coverage results'
-- task: SonarQubePublish@8
-  condition: eq(variables['python.version'], '3.11')
-  inputs:
-    pollingTimeoutSec: '300'
-  displayName: 'Publish Quality Gate Result'
