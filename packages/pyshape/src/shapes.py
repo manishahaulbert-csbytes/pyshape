@@ -1,4 +1,3 @@
-
 # shapes.py -- object oriented shapes
 #
 # Copyright (c) 2010, A. G. Smith
@@ -114,4 +113,3 @@ class Rhombus(Parallelogram):
 
     def area(self):
         return (self.diagonal1 * self.diagonal2) / 2
-    

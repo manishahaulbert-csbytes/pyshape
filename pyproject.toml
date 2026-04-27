@@ -1,13 +1,82 @@
+# PyShape Monorepo Configuration
+# This file manages the overall monorepo structure and shared configuration
+
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pyshape"
+name = "pyshape-monorepo"
 version = "0.1.0"
+description = "A monorepo containing pyshape (geometric shapes) and pymath (mathematical utilities) libraries"
+readme = "README.md"
+requires-python = ">=3.8"
 dependencies = [
-    "pytest",
+    "pytest>=6.0",
+    "coverage>=6.0",
+    "unittest-xml-reporting>=3.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black",
+    "flake8", 
+    "mypy",
+    "pytest-cov",
 ]
 
 [tool.setuptools]
-py-modules = ["shapes"]
+packages = []  # No packages at root level
+
+[tool.pytest.ini_options]
+testpaths = ["packages/*/tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--verbose",
+    "--tb=short",
+    "--strict-markers",
+]
+
+[tool.black]
+line-length = 88
+target-version = ['py38']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.coverage.run]
+source = ["packages"]
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "*/conftest.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+]
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true

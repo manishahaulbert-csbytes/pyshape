@@ -1,9 +1,95 @@
-.scannerwork
-.pytest_cache
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# PyCharm
+.idea/
+
+# VS Code
+.vscode/settings.json
+.vscode/launch.json
+.vscode/tasks.json
+.vscode/extensions.json
+.vscode/*.code-snippets
+
+# Monorepo specific
+# Keep individual package build artifacts local
+packages/*/build/
+packages/*/dist/
+packages/*/*.egg-info/
+packages/*/*__pycache__/
+
+# SonarQube
+.scannerwork/
+.sonarqube/
+sonar-project.properties
+
+# Legacy files from old structure
 src/__pycache__/
 tests/__pycache__/
-*.pyc
-.coverage
+
+# Coverage reports
 coverage.xml
+coverage.xml_*
 htmlcov/
-sonar-project.properties
+
+# OS files
+.DS_Store
+Thumbs.db

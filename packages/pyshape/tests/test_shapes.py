@@ -1,4 +1,3 @@
-
 # test_shapes.py -- tests for shapes.py
 #
 # Copyright (c) 2010, A. G. Smith
@@ -23,6 +22,11 @@
 
 
 import unittest
+import sys
+import os
+
+# Add the src directory to the path so we can import shapes
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 import shapes
 
 class TestShapes(unittest.TestCase):
@@ -39,7 +43,7 @@ class TestShapes(unittest.TestCase):
     def test_triangle_init(self):
         shapes.Triangle()
 
-    def test_triangle_init(self):
+    def test_triangle_init_with_area(self):
         # failing test example
         b = 4
         h = 10
@@ -81,7 +85,6 @@ class TestShapes(unittest.TestCase):
         e = shapes.Ellipse(major_axis=a, minor_axis=b)
         self.assertAlmostEqual(e.area(), 3.14159 * a * b, places=2)
 
-    
     def test_ellipse1_init(self):
         # failing test example
         a = 5
@@ -96,8 +99,6 @@ class TestShapes(unittest.TestCase):
         e = shapes.Ellipse1(major_axis=a, minor_axis=b)
         self.assertNotEqual(e.area(), 3.14159 * a * b)
 
-
-
     def test_rhombus_init(self):
         shapes.Rhombus()
     
@@ -106,3 +107,7 @@ class TestShapes(unittest.TestCase):
         h = 10
         r = shapes.Rhombus(base=b, height=h)
         self.assertEqual(r.area(), b*h)
+
+
+if __name__ == '__main__':
+    unittest.main()
