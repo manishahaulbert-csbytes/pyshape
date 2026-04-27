@@ -26,6 +26,8 @@ def demo_vectors():
     print(f"Angle between vectors: {math.degrees(v1.angle_between(v2)):.2f} degrees")
     print(f"Vector addition: {v1 + v2}")
     print()
+    print(f"Vector subtraction: {v1 - v2}")
+    print(f"Scalar multiplication (v1 * 2): {v1 * 2
 
 
 def demo_statistics():
