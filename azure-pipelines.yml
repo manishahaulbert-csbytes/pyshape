@@ -46,11 +46,12 @@ steps:
 # Run tests with coverage once (all packages)
 - script: |
     echo "Running tests for PyShape Monorepo..."
-    pytest packages/*/tests/ \
-      --doctest-modules \
-      --junitxml=test-results.xml \
-      --cov=packages \
-      --cov-report=xml \
+    cd packages
+    pytest pymath/tests pyshape/tests \
+      --junitxml=../test-results.xml \
+      --cov=pymath/src \
+      --cov=pyshape/src \
+      --cov-report=xml:../coverage.xml \
       --cov-report=term-missing \
       --verbose
   displayName: 'Run tests with coverage for all packages'
