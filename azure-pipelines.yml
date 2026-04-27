@@ -24,11 +24,15 @@ variables:
   pymathKey: 'manishahaulbert-csbytes_python_pymath'
 
 steps:
-- task: UsePythonVersion@0
+- checkout: self
   fetchDepth: 0
   lfs: true
+  displayName: 'Checkout Source Code'
+
+- task: UsePythonVersion@0
   inputs:
     versionSpec: '$(python.version)'
+  displayName: 'Use Python $(python.version)'
 
 # 1. Detect Changes
 - script: |

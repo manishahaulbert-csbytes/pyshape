@@ -29,6 +29,8 @@ def demo_vectors():
     print(f"Vector subtraction: {v1 - v2}")
     print(f"Scalar multiplication (v1 * 2): {v1 * 2)}")
     print()
+    print("Vector2D demo completed successfully!")
+    print()
 
 
 def demo_statistics():
