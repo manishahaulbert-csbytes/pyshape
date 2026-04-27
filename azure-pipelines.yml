@@ -14,141 +14,100 @@ pool:
 
 strategy:
   matrix:
-    Python314:
-      python.version: '3.14'
     Python311:
       python.version: '3.11'
+    Python314:
+      python.version: '3.14'
 
 variables:
-  PYTHONPATH: '$(System.DefaultWorkingDirectory)'
-  pyshapeProjectKey: 'pyshape_pyshape'
-  pymathProjectKey: 'manishahaulbert-csbytes_python_pymath'
+  pyshapeKey: 'pyshape_pyshape'
+  pymathKey: 'manishahaulbert-csbytes_python_pymath'
 
 steps:
 - task: UsePythonVersion@0
   inputs:
     versionSpec: '$(python.version)'
-  displayName: 'Use Python $(python.version)'
 
-# Install dependencies (all jobs)
+# 1. Detect Changes
+- script: |
+    # Check for changes in specific directories
+    CHANGED_FILES=$(git diff --name-only HEAD~1)
+    echo "Files changed: $CHANGED_FILES"
+    
+    if echo "$CHANGED_FILES" | grep -q "packages/pyshape"; then
+      echo "##vso[task.setvariable variable=runPyshape;isOutput=true]true"
+      echo "Detected changes in PyShape"
+    fi
+    
+    if echo "$CHANGED_FILES" | grep -q "packages/pymath"; then
+      echo "##vso[task.setvariable variable=runPymath;isOutput=true]true"
+      echo "Detected changes in PyMath"
+    fi
+  name: DetermineChanges
+  displayName: 'Detect Changed Packages'
+
+# 2. Install Dependencies (Global)
 - script: |
     python -m pip install --upgrade pip
-    pip install -r requirements.txt
-    pip install -e .
-  displayName: 'Install monorepo dependencies'
+    pip install pytest pytest-cov
+  displayName: 'Install Base Tools'
 
+# --- PyShape Block ---
 - script: |
-    cd packages/pyshape && pip install -e .
-    cd ../pymath && pip install -e .
-    cd ../..
-  displayName: 'Install package dependencies'
+    pip install -e ./packages/pyshape
+    export PYTHONPATH="$(System.DefaultWorkingDirectory)/packages/pyshape/src"
+    pytest packages/pyshape/tests \
+      --junitxml=pyshape-results.xml \
+      --cov=packages/pyshape/src \
+      --cov-report=xml:pyshape-coverage.xml
+  displayName: 'Run PyShape Tests'
+  condition: eq(variables['DetermineChanges.runPyshape'], 'true')
 
-# Run tests with coverage once (all packages)
-- script: |
-    echo "Running tests for PyShape Monorepo..."
-    cd packages
-    pytest pymath/tests pyshape/tests \
-      --junitxml=../test-results.xml \
-      --cov=pymath/src \
-      --cov=pyshape/src \
-      --cov-report=xml:../coverage.xml \
-      --cov-report=term-missing \
-      --verbose
-  displayName: 'Run tests with coverage for all packages'
-
-# Optional: per-package tests (for detail)
-- script: |
-    echo "Testing PyShape package..."
-    cd packages/pyshape
-    pytest tests/test_shapes.py -v --junitxml=../../pyshape-test-results.xml
-    cd ../..
-  displayName: 'Test PyShape package'
-  continueOnError: true
-
-- script: |
-    echo "Testing PyMath package..."
-    cd packages/pymath
-    pytest tests/test_mathutils.py -v --junitxml=../../pymath-test-results.xml
-    cd ../..
-  displayName: 'Test PyMath package'
-  continueOnError: true
-
-# Optional: demos
-- script: |
-    echo "Running PyMath demo..."
-    cd packages/pymath/src && python main.py
-    echo "Running PyShape demo..."
-    cd ../../pyshape/src && python main.py
-    cd ../../..
-  displayName: 'Run package demos'
-  continueOnError: true
-
-# --- SonarQube: Project 1 (pyshape) ---
 - task: SonarQubePrepare@8
-  condition: eq(variables['python.version'], '3.11')
+  condition: and(eq(variables['python.version'], '3.11'), eq(variables['DetermineChanges.runPyshape'], 'true'))
   inputs:
     SonarQube: '20261sonarqubeserver'
     scannerMode: 'CLI'
-    cliScannerVersion: '8.0.1.6346'
     configMode: 'manual'
-    cliProjectKey: '$(pyshapeProjectKey)'
-    cliProjectName: 'PyShape / pyshape'
+    cliProjectKey: '$(pyshapeKey)'
     extraProperties: |
-      sonar.scanner.skipJreProvisioning=true
-      sonar.python.version=$(python.version)
-      sonar.projectBaseDir=$(System.DefaultWorkingDirectory)/packages/pyshape
+      sonar.projectBaseDir=packages/pyshape
       sonar.sources=src
       sonar.tests=tests
-      sonar.python.xunit.reportPath=$(System.DefaultWorkingDirectory)/test-results.xml
-      sonar.python.coverage.reportPaths=$(System.DefaultWorkingDirectory)/coverage.xml
-      sonar.coverage.exclusions=**/tests/**,**/test_*.py,**/__pycache__/**
-      sonar.exclusions=**/__pycache__/**,**/.*,scripts/**
+      sonar.python.xunit.reportPath=$(System.DefaultWorkingDirectory)/pyshape-results.xml
+      sonar.python.coverage.reportPaths=$(System.DefaultWorkingDirectory)/pyshape-coverage.xml
 
-- task: SonarQubeAnalyze@8
-  condition: eq(variables['python.version'], '3.11')
-  inputs:
-    jdkversion: 'JAVA_HOME_17_X64'
-  displayName: 'Analyze SonarQube project: pyshape'
+# --- PyMath Block ---
+- script: |
+    pip install -e ./packages/pymath
+    export PYTHONPATH="$(System.DefaultWorkingDirectory)/packages/pymath/src"
+    pytest packages/pymath/tests \
+      --junitxml=pymath-results.xml \
+      --cov=packages/pymath/src \
+      --cov-report=xml:pymath-coverage.xml
+  displayName: 'Run PyMath Tests'
+  condition: eq(variables['DetermineChanges.runPymath'], 'true')
 
-# --- SonarQube: Project 2 (pymath) ---
 - task: SonarQubePrepare@8
-  condition: eq(variables['python.version'], '3.11')
+  condition: and(eq(variables['python.version'], '3.11'), eq(variables['DetermineChanges.runPymath'], 'true'))
   inputs:
     SonarQube: '20261sonarqubeserver'
     scannerMode: 'CLI'
-    cliScannerVersion: '8.0.1.6346'
     configMode: 'manual'
-    cliProjectKey: '$(pymathProjectKey)'
-    cliProjectName: 'PyShape / pymath'
+    cliProjectKey: '$(pymathKey)'
     extraProperties: |
-      sonar.scanner.skipJreProvisioning=true
-      sonar.python.version=$(python.version)
-      sonar.projectBaseDir=$(System.DefaultWorkingDirectory)/packages/pymath
+      sonar.projectBaseDir=packages/pymath
       sonar.sources=src
       sonar.tests=tests
-      sonar.python.xunit.reportPath=$(System.DefaultWorkingDirectory)/test-results.xml
-      sonar.python.coverage.reportPaths=$(System.DefaultWorkingDirectory)/coverage.xml
-      sonar.coverage.exclusions=**/tests/**,**/test_*.py,**/__pycache__/**
-      sonar.exclusions=**/__pycache__/**,**/.*,scripts/**
+      sonar.python.xunit.reportPath=$(System.DefaultWorkingDirectory)/pymath-results.xml
+      sonar.python.coverage.reportPaths=$(System.DefaultWorkingDirectory)/pymath-coverage.xml
 
+# 3. Analyze & Publish (Combined)
 - task: SonarQubeAnalyze@8
   condition: eq(variables['python.version'], '3.11')
-  inputs:
-    jdkversion: 'JAVA_HOME_17_X64'
-  displayName: 'Analyze SonarQube project: pymath'
+  displayName: 'Run Sonar Analysis'
 
-# Publish tests (all jobs)
 - task: PublishTestResults@2
   condition: succeededOrFailed()
   inputs:
-    testResultsFiles: '**/test-results.xml'
-    testRunTitle: 'Python $(python.version) - Monorepo Tests'
-  displayName: 'Publish test results'
-
-# Publish coverage (once, from 3.11)
-- task: PublishCodeCoverageResults@2
-  condition: eq(variables['python.version'], '3.11')
-  inputs:
-    summaryFileLocation: '$(System.DefaultWorkingDirectory)/coverage.xml'
-    codecoverageTool: 'Cobertura'
-  displayName: 'Publish coverage results'
+    testResultsFiles: '*-results.xml'

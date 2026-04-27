@@ -1,21 +1,29 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=61.0", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "pymath"
 version = "0.1.0"
-description = "A Python library for mathematical utilities including vectors, statistics, geometry, and number theory"
-dependencies = [
-    "pytest",
+description = "Mathematical utility functions for the PyShape monorepo"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
 ]
 
 [tool.setuptools]
+# This explicitly tells setuptools where the 'real' code lives
 package-dir = {"" = "src"}
-py-modules = ["mathutils"]
+packages = {find = {where = ["src"]}}
 
 [tool.pytest.ini_options]
+# Crucial: This allows you to run 'pytest' from inside the package folder
+# or from the root and still have imports resolve correctly.
+pythonpath = ["src"]
 testpaths = ["tests"]
-python_files = ["test_*.py"]
-python_classes = ["Test*"]
-python_functions = ["test_*"]
+addopts = "--import-mode=importlib"
