@@ -22,7 +22,7 @@ strategy:
 variables:
   PYTHONPATH: '$(System.DefaultWorkingDirectory)'
   pyshapeProjectKey: 'pyshape_pyshape'
-  pymathProjectKey: 'pyshape_pymath'
+  pymathProjectKey: 'manishahaulbert-csbytes_python_pymath'
 
 steps:
 - task: UsePythonVersion@0
