@@ -1,13 +1,27 @@
 trigger:
 - master
+- main
+- develop
+- feature/*
+
+# Enable PR triggers for pull requests targeting these branches
+pr:
+- master
+- main
+- develop
 
 pool:
   vmImage: ubuntu-latest
 
 strategy:
   matrix:
+    Python314:
+      python.version: '3.14'
     Python311:
       python.version: '3.11'
+
+variables:
+  PYTHONPATH: '$(System.DefaultWorkingDirectory)'
 
 steps:
 - task: UsePythonVersion@0
@@ -25,36 +39,93 @@ steps:
     cliScannerVersion: '8.0.1.6346'
     configMode: 'manual'
     cliProjectKey: $(projectKey)
-    cliProjectName: 'PyShape'
+    cliProjectName: 'PyShape Monorepo'
     extraProperties: |
       sonar.scanner.skipJreProvisioning=true
       sonar.python.version=$(python.version)
-      sonar.sources=.
-      sonar.tests=tests/
+      sonar.sources=packages/
+      sonar.tests=packages/*/tests/
       sonar.python.xunit.reportPath=$(System.DefaultWorkingDirectory)/test-results.xml
       sonar.python.coverage.reportPaths=$(System.DefaultWorkingDirectory)/coverage.xml
+      sonar.coverage.exclusions=**/tests/**,**/test_*.py,**/__pycache__/**
+      sonar.exclusions=**/__pycache__/**,**/.*,scripts/**
 
 - script: |
     python -m pip install --upgrade pip
     pip install -r requirements.txt
-    pip install pytest pytest-azurepipelines pytest-cov
-  displayName: 'Install dependencies'
+    # Install monorepo dependencies
+    pip install -e .
+  displayName: 'Install monorepo dependencies'
 
-# 2. Run tests with Coverage
+- script: |
+    # Install individual package dependencies for development
+    cd packages/pyshape && pip install -e .
+    cd ../pymath && pip install -e .
+    cd ../..
+  displayName: 'Install package dependencies'
+
+# 2. Run tests with Coverage for both packages
 # SonarQube needs the coverage.xml file to show code coverage
 - script: |
-    pytest --doctest-modules --junitxml=test-results.xml --cov=. --cov-report=xml
-  displayName: 'pytest with coverage'
+    echo "Running tests for PyShape Monorepo..."
+    pytest packages/*/tests/ --doctest-modules --junitxml=test-results.xml --cov=packages --cov-report=xml --cov-report=term-missing --verbose
+  displayName: 'Run tests with coverage for all packages'
 
-# 3. Run Code Analysis
+# 3. Run individual package tests (for detailed reporting)
+- script: |
+    echo "Testing PyShape package..."
+    cd packages/pyshape
+    pytest tests/test_shapes.py -v --junitxml=../../pyshape-test-results.xml
+    cd ../..
+  displayName: 'Test PyShape package'
+  continueOnError: true
+
+- script: |
+    echo "Testing PyMath package..."
+    cd packages/pymath 
+    pytest tests/test_mathutils.py -v --junitxml=../../pymath-test-results.xml
+    cd ../..
+  displayName: 'Test PyMath package'
+
+# 4. Run package demos
+- script: |
+    echo "Running PyMath demo..."
+    cd packages/pymath/src && python main.py
+    echo "Running PyShape demo..."
+    cd ../../pyshape/src && python main.py
+    cd ../../..
+  displayName: 'Run package demos'
+  continueOnError: true
+
+# 5. Run Code Analysis
 - task: SonarQubeAnalyze@8
   inputs:
     jdkversion: 'JAVA_HOME_17_X64'
   condition: eq(variables['python.version'], '3.11')
   displayName: 'Run SonarQube Analysis'
 
+# 6. Publish Results to SonarQube
+- task: SonarQubePublish@8
+  condition: eq(variables['python.version'], '3.11')
+  inputs:
+    pollingTimeoutSec: '300'
+  displayName: 'Publish Quality Gate Result'
 
-# 4. Publish Results to SonarQube
+# 7. Publish test results
+- task: PublishTestResults@2
+  condition: succeededOrFailed()
+  inputs:
+    testResultsFiles: '**/test-results.xml'
+    testRunTitle: 'Python $(python.version) - Monorepo Tests'
+  displayName: 'Publish test results'
+
+# 8. Publish coverage results
+- task: PublishCodeCoverageResults@2
+  condition: eq(variables['python.version'], '3.11')
+  inputs:
+    summaryFileLocation: '$(System.DefaultWorkingDirectory)/coverage.xml'
+    codecoverageTool: 'Cobertura'
+  displayName: 'Publish coverage results'
 - task: SonarQubePublish@8
   condition: eq(variables['python.version'], '3.11')
   inputs:
